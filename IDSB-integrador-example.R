@@ -42,7 +42,7 @@ glimpse(ecobicis_df)
 sample_n(ecobicis_df, 10)
 
 glimpse(usuarios_df)
-sample_n(ecobicis_df,10)
+sample_n(usuarios_df,10)
 
 
 # Stats
@@ -50,7 +50,7 @@ summary(ecobicis_df)
 summary(usuarios_df)
 
 
-#2 univariate plots
+#2 univariate plotshttp://localhost:8787/graphics/plot_zoom_png?width=663&height=646
 
 ggplot(ecobicis_df)+
   geom_bar(aes(x= as.factor(genero_usuario)))
@@ -240,7 +240,7 @@ test_df <- sl_data[-keep,]
 
 # bss
 
-bss <- regsubsets(log(tiempo)~., train_df , method = 'exhaustive')
+bss <- regsubsets(tiempo~., train_df , method = 'exhaustive')
 
 summary(bss) 
 summary(bss)$adjr2 %>% which.max()
@@ -257,11 +257,9 @@ summary(lin_model)
 
 preds <- predict(lin_model, test_df)
 
-RSQUARE = function(y_actual,y_predict){
-  cor(y_actual,y_predict)^2
-}
 
-RSQUARE(test_df$tiempo, preds)
+
+rmse(test_df$tiempo, preds)
 
 
 
