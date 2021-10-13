@@ -24,6 +24,7 @@ download.file('https://cdn.buenosaires.gob.ar/datosabiertos/datasets/transporte/
 ecobicis_df <- read_csv(unz(temp,'recorridos-realizados-2018.csv')) %>% 
   clean_names()
 
+#1 bind data
 usuarios_list <- map(2015:2018,~ read_csv(paste0(
   "http://cdn.buenosaires.gob.ar/datosabiertos/datasets/bicicletas-publicas/usuarios-ecobici-",
   .x, ".csv"))) 
@@ -48,12 +49,13 @@ sample_n(ecobicis_df,10)
 summary(ecobicis_df)
 summary(usuarios_df)
 
-#univariate plots
+
+#2 univariate plots
 
 ggplot(ecobicis_df)+
   geom_bar(aes(x= as.factor(genero_usuario)))
 
-
+# columna generada
 ecobicis_df$tiempo <- as.numeric(ecobicis_df$fecha_destino_recorrido - ecobicis_df$fecha_origen_recorrido)
 
 
@@ -62,7 +64,7 @@ ggplot(ecobicis_df)+
   scale_x_log10()
 
 
-#time series plots
+#3 time series plots
 
 #viajes por día
 
@@ -93,7 +95,7 @@ ecobicis_df %>%
 
 
 
-#duraciones de los recorridos por semana
+#4 duraciones de los recorridos por semana
 
 ecobicis_df$dia_semana <-  ecobicis_df$fecha_origen_recorrido %>% wday(label = T, abbr = F)
 
@@ -117,7 +119,7 @@ ecobicis_df %>%
   ggtitle("Número de operaciones por día de la semana")+
   theme_bw()
 
-
+#5 Outliers.
 #histograma de outliers
 
 ecobicis_df %>% 
@@ -132,7 +134,7 @@ ecobicis_df %>%
   ylab("Número de operaciones")
 
 
-#inference
+#6 inference
 
 # conf ints int por días de semana
 
@@ -163,7 +165,7 @@ ggplot(operaciones_dia_summ, aes(x = fct_rev(dia_semana))) +
   ylab("Cantidad de Registros")+
   ggtitle("Intervalos de confianza de registros por día de semana")
 
-#observemos todas las estaciones en un mapa!
+#7 observemos todas las estaciones en un mapa!
 
 
 estaciones_df <- ecobicis_df %>% 
@@ -181,7 +183,7 @@ ggmap(get_stamenmap(bbox, zoom = 13))+
   geom_point(data = estaciones_df, aes( x=long_estacion_origen, y =lat_estacion_origen  ))
 
 
-
+#8 & 9
 # Visual de usuarios_df piramides poblacionales
 
 usuarios_plot <- usuarios_df %>% 
@@ -211,7 +213,7 @@ ggplot(usuarios_plot, aes(x = rango_etario, y = total, fill = usuario_sexo))+
 
 
 
-#join de usuarios
+#10 join de usuarios
 
 bicis_df_joined <-  left_join(ecobicis_df, usuarios_df,by = c("id_usuario" = "usuario_id")) %>% 
   filter(!is.na(usuario_edad),
@@ -224,12 +226,12 @@ sl_data <- bicis_df_joined %>%
          id_estacion_destino == 5,
          !is.na(tiempo)) %>% 
   mutate(inicio_time = hour(fecha_origen_recorrido) * 60 + minute(fecha_origen_recorrido)) %>% 
-  select(genero_usuario, dia_semana, usuario_edad, rango_etario, hora_alta, inicio_time,inicio_time_sqrd, tiempo) %>% 
+  select(genero_usuario, dia_semana, usuario_edad, hora_alta, inicio_time, tiempo) %>% 
   mutate(hora_alta = as.numeric(hora_alta))
 
 
 
-# train test split
+# 11 train test split
 set.seed(0)
 keep <- sample(1:nrow(sl_data),size = floor(.8*nrow(sl_data)),replace = F)
 train_df <- sl_data[keep,]
@@ -263,11 +265,3 @@ RSQUARE(test_df$tiempo, preds)
 
 
 
-#log-lin model
-
-log_lin_model <- lm(log(tiempo)~., data = train_df)
-summary(log_lin_model)
-
-
-preds2 <- predict(log_lin_model, test_df)
-RSQUARE(log(test_df$tiempo), preds2)
